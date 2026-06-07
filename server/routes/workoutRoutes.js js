@@ -1,0 +1,13 @@
+import express from "express";
+import {
+  getAllWorkouts, getWorkoutById, createWorkout, deleteWorkout, getStreak
+} from "../controllers/workoutController.js";
+
+const router = express.Router();
+router.get("/", getAllWorkouts);
+router.get("/streak", getStreak);
+router.get("/:id", getWorkoutById);
+router.post("/", createWorkout);
+router.delete("/:id", deleteWorkout);
+
+export default router;
