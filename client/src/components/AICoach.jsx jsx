@@ -1,0 +1,64 @@
+import { useState } from "react";
+import api from "../api/axiosInstance";
+import { Brain, Sparkles } from "lucide-react";
+
+export default function AICoach() {
+  const [form, setForm] = useState({ goal: "muscle gain", level: "intermediate", daysPerWeek: 4, equipment: "full gym" });
+  const [plan, setPlan] = useState("");
+  const [analysis, setAnalysis] = useState("");
+  const [loading, setLoading] = useState({ plan: false, analysis: false });
+
+  const generatePlan = async () => {
+    setLoading(l => ({ ...l, plan: true }));
+    try { const r = await api.post("/ai/plan", form); setPlan(r.data.plan); }
+    finally { setLoading(l => ({ ...l, plan: false })); }
+  };
+
+  const analyzeProgress = async () => {
+    setLoading(l => ({ ...l, analysis: true }));
+    try { const r = await api.get("/ai/analyze"); setAnalysis(r.data.analysis); }
+    finally { setLoading(l => ({ ...l, analysis: false })); }
+  };
+
+  const field = (key, label, type = "text", options) => (
+    <div key={key}>
+      <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">{label}</label>
+      {options
+        ? <select className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm w-full"
+            value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}>
+            {options.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        : <input className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm w-full"
+            type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 space-y-4">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2"><Brain className="text-indigo-400" /> Generate Workout Plan</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {field("goal", "Goal", "text", ["muscle gain", "fat loss", "strength", "endurance", "general fitness"])}
+          {field("level", "Level", "text", ["beginner", "intermediate", "advanced"])}
+          {field("daysPerWeek", "Days/Week", "number")}
+          {field("equipment", "Equipment", "text", ["full gym", "home gym", "dumbbells only", "bodyweight only"])}
+        </div>
+        <button onClick={generatePlan} disabled={loading.plan}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-medium transition-colors">
+          <Sparkles size={16} /> {loading.plan ? "Generating..." : "Generate Plan"}
+        </button>
+        {plan && <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">{plan}</pre>}
+      </div>
+
+      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 space-y-4">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2"><Brain className="text-green-400" /> Analyze My Progress</h2>
+        <p className="text-gray-400 text-sm">AI will analyze your last 10 workouts and PRs to give personalized insights.</p>
+        <button onClick={analyzeProgress} disabled={loading.analysis}
+          className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-medium transition-colors">
+          <Brain size={16} /> {loading.analysis ? "Analyzing..." : "Analyze Progress"}
+        </button>
+        {analysis && <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">{analysis}</pre>}
+      </div>
+    </div>
+  );
+}
